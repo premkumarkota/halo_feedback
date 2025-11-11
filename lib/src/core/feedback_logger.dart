@@ -169,12 +169,16 @@ class FeedbackLogger {
     required String deviceId,
     String? appIdentifier,
     String? queryParams,
+    String? platform,
   }) {
     developer.log(
       '═══════════════════════════════════════════════════════════',
       name: _tag,
     );
     developer.log('🌐 FEEDBACK API REQUEST', name: _tag);
+    if (platform != null) {
+      developer.log('Platform: $platform', name: _tag);
+    }
     developer.log('Base URL: $baseUrl', name: _tag);
     developer.log('Endpoint: $endpoint', name: _tag);
     developer.log('Device ID: $deviceId', name: _tag);
@@ -188,6 +192,11 @@ class FeedbackLogger {
       '═══════════════════════════════════════════════════════════',
       name: _tag,
     );
+    // Print to console for visibility
+    print(
+      '🌐 [HaloFeedback] FEEDBACK API - Platform: ${platform ?? "Unknown"}',
+    );
+    print('🌐 [HaloFeedback] URL: $fullUrl');
   }
 
   /// Log API response
@@ -195,12 +204,16 @@ class FeedbackLogger {
     required int? statusCode,
     required dynamic response,
     String? endpoint,
+    String? platform,
   }) {
     developer.log(
       '═══════════════════════════════════════════════════════════',
       name: _tag,
     );
     developer.log('📥 API RESPONSE', name: _tag);
+    if (platform != null) {
+      developer.log('Platform: $platform', name: _tag);
+    }
     if (endpoint != null) {
       developer.log('Endpoint: $endpoint', name: _tag);
     }
@@ -209,6 +222,10 @@ class FeedbackLogger {
     developer.log(
       '═══════════════════════════════════════════════════════════',
       name: _tag,
+    );
+    // Print to console for visibility
+    print(
+      '📥 [HaloFeedback] API RESPONSE - Platform: ${platform ?? "Unknown"}, Status: ${statusCode ?? "N/A"}',
     );
   }
 
@@ -245,12 +262,16 @@ class FeedbackLogger {
     required String baseUrl,
     required String endpoint,
     required String code,
+    String? platform,
   }) {
     developer.log(
       '═══════════════════════════════════════════════════════════',
       name: _tag,
     );
     developer.log('🔐 LOGIN API REQUEST', name: _tag);
+    if (platform != null) {
+      developer.log('Platform: $platform', name: _tag);
+    }
     developer.log('Base URL: $baseUrl', name: _tag);
     developer.log('Endpoint: $endpoint', name: _tag);
     developer.log('Code: $code', name: _tag);
@@ -260,6 +281,10 @@ class FeedbackLogger {
       '═══════════════════════════════════════════════════════════',
       name: _tag,
     );
+    // Print to console for visibility
+    print('🔐 [HaloFeedback] LOGIN API - Platform: ${platform ?? "Unknown"}');
+    print('🔐 [HaloFeedback] URL: $fullUrl');
+    print('🔐 [HaloFeedback] Code: $code');
   }
 
   /// Log success result

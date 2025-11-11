@@ -26,6 +26,7 @@ class FeedbackClient {
       deviceId: deviceId,
       appIdentifier: appIdentifier,
       queryParams: queryString,
+      platform: _getPlatformFromEndpoint(endpoint),
     );
 
     int attempt = 0;
@@ -50,6 +51,7 @@ class FeedbackClient {
           statusCode: response.statusCode,
           response: response.data,
           endpoint: endpoint,
+          platform: _getPlatformFromEndpoint(endpoint),
         );
 
         if (response.statusCode == 200) {
@@ -119,6 +121,7 @@ class FeedbackClient {
       baseUrl: _config.baseUrl,
       endpoint: _config.endpoints.loginEndpoint,
       code: code,
+      platform: 'All Platforms', // Login API is same for all platforms
     );
 
     final url = '${_config.baseUrl}/${_config.endpoints.loginEndpoint}';
@@ -135,6 +138,7 @@ class FeedbackClient {
         statusCode: response.statusCode,
         response: response.data,
         endpoint: _config.endpoints.loginEndpoint,
+        platform: 'All Platforms',
       );
 
       if (response.statusCode == 200) {
@@ -186,5 +190,13 @@ class FeedbackClient {
       );
       throw AuthenticationException('Login failed: ${e.toString()}');
     }
+  }
+
+  /// Helper to determine platform from endpoint
+  String? _getPlatformFromEndpoint(String endpoint) {
+    if (endpoint.contains('android')) return 'Android';
+    if (endpoint.contains('ios')) return 'iOS/macOS';
+    if (endpoint.contains('win')) return 'Windows';
+    return null;
   }
 }
