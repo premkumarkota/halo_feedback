@@ -1,0 +1,18 @@
+# Exclude the halo-files application directory
+# This is a separate application that uses the plugin, not part of the plugin itself
+halo-files/
+
+# Exclude build artifacts
+build/
+.dart_tool/
+*.iml
+local.properties
+
+# Exclude documentation that's not needed for the package
+IMPLEMENTATION_STATUS.md
+RESUME_PROMPT.md
+PUBLISH_GUIDE.md
+PUBLISH_TO_PUB_DEV_STEPS.md
+FEEDBACK_MECHANISM_DOCUMENTATION.md
+FLUTTER_FEEDBACK_PLUGIN_PROPOSAL.md
+
