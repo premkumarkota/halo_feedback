@@ -1,8 +1,8 @@
-import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
 import '../core/feedback_client.dart';
 import '../core/feedback_config.dart';
 import '../core/feedback_result.dart';
+import '../core/feedback_logger.dart';
 import '../exceptions/feedback_exceptions.dart';
 import '../models/feedback_data.dart';
 
@@ -27,33 +27,69 @@ class AndroidFeedbackHandler {
       // Get native data if not provided
       final data = nativeData ?? await _getNativeData();
       final deviceType = data['deviceType'] as String?;
+      final randomId = data['randomId'] as String?;
+      final androidId = data['androidId'] as String?;
+
+      // Log Android device data
+      FeedbackLogger.logAndroidData(
+        randomId: randomId,
+        androidId: androidId,
+        deviceType: deviceType,
+        nativeData: data,
+      );
 
       // Handle TV/IFP flow (skip feedback API, use pre-provided token)
       if (deviceType != null && deviceType != 'Mobile') {
+        FeedbackLogger.logFlowType('TV/IFP Flow');
         return await _handleTvIfpFlow(data);
       }
 
       // Handle Mobile flow
+      FeedbackLogger.logFlowType('Mobile Flow');
       return await _handleMobileFlow(data, deviceId);
     } on DeviceNotFoundException catch (e) {
+      FeedbackLogger.logFailure(
+        error: e.message,
+        errorType: 'DeviceNotFound',
+        platform: 'Android',
+        details: e.toString(),
+      );
       return FeedbackFailure(
         error: e.message,
         errorType: FeedbackErrorType.deviceNotFound,
         exception: e,
       );
     } on NetworkException catch (e) {
+      FeedbackLogger.logFailure(
+        error: e.message,
+        errorType: 'NetworkError',
+        platform: 'Android',
+        details: e.toString(),
+      );
       return FeedbackFailure(
         error: e.message,
         errorType: FeedbackErrorType.networkError,
         exception: e,
       );
     } on AuthenticationException catch (e) {
+      FeedbackLogger.logFailure(
+        error: e.message,
+        errorType: 'AuthenticationFailed',
+        platform: 'Android',
+        details: e.toString(),
+      );
       return FeedbackFailure(
         error: e.message,
         errorType: FeedbackErrorType.authenticationFailed,
         exception: e,
       );
     } catch (e) {
+      FeedbackLogger.logFailure(
+        error: 'Android feedback failed: ${e.toString()}',
+        errorType: 'InvalidResponse',
+        platform: 'Android',
+        details: e.toString(),
+      );
       return FeedbackFailure(
         error: 'Android feedback failed: ${e.toString()}',
         errorType: FeedbackErrorType.invalidResponse,
@@ -90,11 +126,22 @@ class AndroidFeedbackHandler {
     // 3. Login with code
     final loginResult = await _client.loginWithCode(code);
 
-    return FeedbackSuccess(
+    final result = FeedbackSuccess(
       feedbackCode: code,
       authData: loginResult.authData,
       config: loginResult.config,
     );
+
+    // Log success
+    FeedbackLogger.logSuccess(
+      feedbackCode: code,
+      deviceId: result.config.deviceId,
+      tenantId: result.config.tenantId,
+      baseUrl: _config.baseUrl,
+      platform: 'Android Mobile',
+    );
+
+    return result;
   }
 
   /// Handle TV/IFP flow (Content Provider or Intent data)
@@ -141,7 +188,7 @@ class AndroidFeedbackHandler {
 
     // For TV/IFP, we return success with the pre-provided token
     // No need to call feedback API
-    return FeedbackSuccess(
+    final result = FeedbackSuccess(
       feedbackCode: null, // No feedback code for TV/IFP
       authData: FeedbackAuthData(
         accessToken: token,
@@ -153,6 +200,17 @@ class AndroidFeedbackHandler {
         baseUrl: baseUrl,
       ),
     );
+
+    // Log success for TV/IFP
+    FeedbackLogger.logSuccess(
+      feedbackCode: null,
+      deviceId: deviceId,
+      tenantId: tenant,
+      baseUrl: baseUrl,
+      platform: 'Android TV/IFP',
+    );
+
+    return result;
   }
 
   Future<Map<String, dynamic>> _getNativeData() async {
@@ -166,15 +224,22 @@ class AndroidFeedbackHandler {
 
   Future<void> _sendKeyedAppStateFeedback(String randomId) async {
     try {
+      FeedbackLogger.logKeyedAppState(
+        key: 'TTEMM_APP',
+        message: randomId,
+        success: true,
+      );
       await _channel.invokeMethod('sendKeyedAppStateFeedback', {
         'key': 'TTEMM_APP',
         'message': randomId,
       });
     } catch (e) {
       // Log but don't fail - KeyedAppState is optional
-      developer.log(
-        'Warning: Failed to send KeyedAppState feedback: $e',
-        name: 'HaloFeedback',
+      FeedbackLogger.logKeyedAppState(
+        key: 'TTEMM_APP',
+        message: randomId,
+        success: false,
+        error: e.toString(),
       );
     }
   }

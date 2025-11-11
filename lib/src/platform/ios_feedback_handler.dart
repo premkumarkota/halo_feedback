@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import '../core/feedback_client.dart';
 import '../core/feedback_config.dart';
 import '../core/feedback_result.dart';
+import '../core/feedback_logger.dart';
 import '../exceptions/feedback_exceptions.dart';
 
 /// iOS/macOS Feedback Handler
@@ -20,16 +21,57 @@ class IosFeedbackHandler {
       // Otherwise, get from MDM config with retry logic (3 attempts, 700ms delay)
       if (certId == null || certId.isEmpty) {
         try {
-          final mdmConfig = await _getMdmConfig();
-          certId = mdmConfig['CERT_ID'] as String?;
+          const int maxAttempts = 3;
+          Map<String, dynamic>? mdmConfig;
+          for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            final config = await _getMdmConfig();
+            if (config.isNotEmpty && config.containsKey('CERT_ID')) {
+              certId = config['CERT_ID'] as String?;
+              mdmConfig = config;
+              FeedbackLogger.logIosMdmConfig(
+                mdmConfig: config,
+                deviceId: certId,
+                attempt: attempt,
+              );
+              break;
+            }
+            if (attempt < maxAttempts) {
+              FeedbackLogger.logRetry(
+                attempt: attempt,
+                maxAttempts: maxAttempts,
+                reason: 'MDM config not available',
+              );
+              await Future.delayed(const Duration(milliseconds: 700));
+            }
+          }
+          if (mdmConfig == null || mdmConfig.isEmpty) {
+            FeedbackLogger.logIosMdmConfig(
+              mdmConfig: null,
+              deviceId: null,
+              attempt: maxAttempts,
+            );
+          }
         } catch (e) {
           // If MDM config retrieval fails, return failure
+          FeedbackLogger.logFailure(
+            error: 'Failed to retrieve MDM configuration: ${e.toString()}',
+            errorType: 'MissingDeviceId',
+            platform: 'iOS/macOS',
+            details: e.toString(),
+          );
           return FeedbackFailure(
             error: 'Failed to retrieve MDM configuration: ${e.toString()}',
             errorType: FeedbackErrorType.missingDeviceId,
             exception: MissingDeviceIdException('MDM config retrieval failed'),
           );
         }
+      } else {
+        // Log provided device ID
+        FeedbackLogger.logIosMdmConfig(
+          mdmConfig: null,
+          deviceId: certId,
+          attempt: null,
+        );
       }
 
       if (certId == null || certId.isEmpty) {
@@ -51,30 +93,65 @@ class IosFeedbackHandler {
       // 3. Login with code
       final loginResult = await _client.loginWithCode(code);
 
-      return FeedbackSuccess(
+      final result = FeedbackSuccess(
         feedbackCode: code,
         authData: loginResult.authData,
         config: loginResult.config,
       );
+
+      // Log success
+      FeedbackLogger.logSuccess(
+        feedbackCode: code,
+        deviceId: result.config.deviceId,
+        tenantId: result.config.tenantId,
+        baseUrl: _config.baseUrl,
+        platform: 'iOS/macOS',
+      );
+
+      return result;
     } on DeviceNotFoundException catch (e) {
+      FeedbackLogger.logFailure(
+        error: e.message,
+        errorType: 'DeviceNotFound',
+        platform: 'iOS/macOS',
+        details: e.toString(),
+      );
       return FeedbackFailure(
         error: e.message,
         errorType: FeedbackErrorType.deviceNotFound,
         exception: e,
       );
     } on NetworkException catch (e) {
+      FeedbackLogger.logFailure(
+        error: e.message,
+        errorType: 'NetworkError',
+        platform: 'iOS/macOS',
+        details: e.toString(),
+      );
       return FeedbackFailure(
         error: e.message,
         errorType: FeedbackErrorType.networkError,
         exception: e,
       );
     } on AuthenticationException catch (e) {
+      FeedbackLogger.logFailure(
+        error: e.message,
+        errorType: 'AuthenticationFailed',
+        platform: 'iOS/macOS',
+        details: e.toString(),
+      );
       return FeedbackFailure(
         error: e.message,
         errorType: FeedbackErrorType.authenticationFailed,
         exception: e,
       );
     } catch (e) {
+      FeedbackLogger.logFailure(
+        error: 'iOS/macOS feedback failed: ${e.toString()}',
+        errorType: 'InvalidResponse',
+        platform: 'iOS/macOS',
+        details: e.toString(),
+      );
       return FeedbackFailure(
         error: 'iOS/macOS feedback failed: ${e.toString()}',
         errorType: FeedbackErrorType.invalidResponse,

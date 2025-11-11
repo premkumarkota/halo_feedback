@@ -8,6 +8,7 @@ import 'src/core/feedback_config.dart';
 import 'src/core/feedback_result.dart';
 import 'src/core/feedback_client.dart';
 import 'src/core/feedback_callbacks.dart';
+import 'src/core/feedback_logger.dart';
 
 // Models
 import 'src/models/feedback_data.dart';
@@ -34,6 +35,7 @@ export 'src/platform/android_feedback_handler.dart';
 export 'src/platform/ios_feedback_handler.dart';
 export 'src/platform/windows_feedback_handler.dart';
 export 'src/exceptions/feedback_exceptions.dart';
+// Note: FeedbackLogger is internal - all logs come from plugin automatically
 
 /// Main plugin class for Halo Feedback
 class HaloFeedback {
@@ -56,6 +58,7 @@ class HaloFeedback {
   /// Initialize the plugin
   ///
   /// [config] - Configuration with base URL and app identifier
+  /// [callbacks] - Optional callbacks for UI navigation
   /// [storage] - Optional custom storage implementation
   /// [callbacks] - Optional callbacks for navigation and UI updates
   ///
@@ -83,6 +86,14 @@ class HaloFeedback {
         storage ??
         DefaultFeedbackStorage(await SharedPreferences.getInstance());
     _callbacks = callbacks;
+
+    // Log initialization
+    FeedbackLogger.logInitialization(
+      baseUrl: config.baseUrl,
+      appIdentifier: config.appIdentifier,
+      flavor: null,
+    );
+    FeedbackLogger.logPlatformDetection(Platform.operatingSystem);
 
     // Initialize Dio client
     final dio = Dio();
@@ -153,11 +164,12 @@ class HaloFeedback {
     FeedbackResult result;
 
     try {
-      // Platform detection and routing
+      // Platform detection and routing - automatically handled by plugin
       if (Platform.isAndroid) {
         if (_androidHandler == null) {
           throw UnsupportedPlatformException('Android handler not initialized');
         }
+        // Plugin automatically handles Mobile vs TV/IFP based on deviceType
         result = await _androidHandler!.execute(
           deviceId: deviceId,
           nativeData: nativeData,
@@ -168,13 +180,21 @@ class HaloFeedback {
             'iOS/macOS handler not initialized',
           );
         }
+        // Plugin automatically handles MDM config retrieval with retry
         result = await _iosHandler!.execute(deviceId: deviceId);
       } else if (Platform.isWindows) {
         if (_windowsHandler == null) {
           throw UnsupportedPlatformException('Windows handler not initialized');
         }
+        // Plugin automatically reads from registry
         result = await _windowsHandler!.execute();
       } else {
+        FeedbackLogger.logFailure(
+          error: 'Platform ${Platform.operatingSystem} is not supported',
+          errorType: 'UnsupportedPlatform',
+          platform: Platform.operatingSystem,
+          details: 'Only Android, iOS, macOS, and Windows are supported',
+        );
         throw UnsupportedPlatformException(
           'Platform ${Platform.operatingSystem} is not supported',
         );

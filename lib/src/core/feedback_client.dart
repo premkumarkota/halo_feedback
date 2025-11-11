@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../exceptions/feedback_exceptions.dart';
 import '../models/feedback_data.dart';
 import 'feedback_config.dart';
+import 'feedback_logger.dart';
 
 /// HTTP client for feedback API calls
 class FeedbackClient {
@@ -16,20 +17,55 @@ class FeedbackClient {
     required String deviceId,
     String? appIdentifier,
   }) async {
-    final url = '${_config.baseUrl}/$endpoint/$deviceId';
-    final queryParams = appIdentifier != null ? {'app': appIdentifier} : null;
+    final queryString = appIdentifier != null ? 'app=$appIdentifier' : null;
+
+    // Log API URL construction
+    FeedbackLogger.logApiUrl(
+      baseUrl: _config.baseUrl,
+      endpoint: endpoint,
+      deviceId: deviceId,
+      appIdentifier: appIdentifier,
+      queryParams: queryString,
+    );
 
     int attempt = 0;
     while (attempt < _config.retryConfig.maxAttempts) {
       try {
+        final url = '${_config.baseUrl}/$endpoint/$deviceId';
+        final queryParams =
+            appIdentifier != null ? {'app': appIdentifier} : null;
+
+        if (attempt > 0) {
+          FeedbackLogger.logRetry(
+            attempt: attempt + 1,
+            maxAttempts: _config.retryConfig.maxAttempts,
+            reason: 'Previous attempt failed',
+          );
+        }
+
         final response = await _dio.get(url, queryParameters: queryParams);
+
+        // Log API response
+        FeedbackLogger.logApiResponse(
+          statusCode: response.statusCode,
+          response: response.data,
+          endpoint: endpoint,
+        );
 
         if (response.statusCode == 200) {
           final data = response.data;
           if (data is Map &&
               data['status'] == 'success' &&
               data['data'] != null) {
-            return data['data'].toString();
+            final code = data['data'].toString();
+            FeedbackLogger.logSuccess(
+              feedbackCode: code,
+              deviceId: deviceId,
+              tenantId: null,
+              baseUrl: _config.baseUrl,
+              platform: null,
+            );
+            return code;
           }
         }
       } catch (e) {
@@ -38,6 +74,12 @@ class FeedbackClient {
           if (errorData is Map &&
               errorData['error'] == 'device not found' &&
               _config.retryConfig.stopOnDeviceNotFound) {
+            FeedbackLogger.logFailure(
+              error: 'Device not found in the system',
+              errorType: 'DeviceNotFound',
+              platform: null,
+              details: 'Device ID: $deviceId',
+            );
             throw const DeviceNotFoundException(
               'Device not found in the system',
             );
@@ -47,6 +89,13 @@ class FeedbackClient {
         if (attempt < _config.retryConfig.maxAttempts - 1) {
           await Future.delayed(_config.retryConfig.delay);
         } else {
+          FeedbackLogger.logFailure(
+            error:
+                'Failed to fetch feedback code after ${_config.retryConfig.maxAttempts} attempts',
+            errorType: 'NetworkError',
+            platform: null,
+            details: e.toString(),
+          );
           throw NetworkException(
             'Failed to fetch feedback code after ${_config.retryConfig.maxAttempts} attempts',
             e is DioException ? e.response?.statusCode : null,
@@ -65,6 +114,13 @@ class FeedbackClient {
   Future<({FeedbackAuthData authData, DeviceConfig config})> loginWithCode(
     String code,
   ) async {
+    // Log login API call
+    FeedbackLogger.logLoginApi(
+      baseUrl: _config.baseUrl,
+      endpoint: _config.endpoints.loginEndpoint,
+      code: code,
+    );
+
     final url = '${_config.baseUrl}/${_config.endpoints.loginEndpoint}';
 
     try {
@@ -72,6 +128,13 @@ class FeedbackClient {
         url,
         data: {'code': code},
         options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+
+      // Log API response
+      FeedbackLogger.logApiResponse(
+        statusCode: response.statusCode,
+        response: response.data,
+        endpoint: _config.endpoints.loginEndpoint,
       );
 
       if (response.statusCode == 200) {
@@ -107,8 +170,20 @@ class FeedbackClient {
       throw const AuthenticationException('Invalid login response');
     } catch (e) {
       if (e is AuthenticationException || e is DeviceNotFoundException) {
+        FeedbackLogger.logFailure(
+          error: e.toString(),
+          errorType: 'AuthenticationFailed',
+          platform: null,
+          details: 'Login API call failed',
+        );
         rethrow;
       }
+      FeedbackLogger.logFailure(
+        error: 'Login failed: ${e.toString()}',
+        errorType: 'NetworkError',
+        platform: null,
+        details: e.toString(),
+      );
       throw AuthenticationException('Login failed: ${e.toString()}');
     }
   }
