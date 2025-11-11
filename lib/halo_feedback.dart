@@ -112,6 +112,7 @@ class HaloFeedback {
   ///
   /// [context] - BuildContext for navigation callbacks (optional)
   /// [deviceId] - Optional device ID override
+  /// [nativeData] - Optional native data (for Android TV/IFP flow)
   /// [customData] - Optional custom data to pass
   ///
   /// Returns [FeedbackResult] which can be handled with `.when()` pattern
@@ -135,6 +136,7 @@ class HaloFeedback {
   Future<FeedbackResult> executeFeedback({
     BuildContext? context,
     String? deviceId,
+    Map<String, dynamic>? nativeData,
     Map<String, dynamic>? customData,
   }) async {
     if (!_initialized || _config == null) {
@@ -156,7 +158,10 @@ class HaloFeedback {
         if (_androidHandler == null) {
           throw UnsupportedPlatformException('Android handler not initialized');
         }
-        result = await _androidHandler!.execute(deviceId: deviceId);
+        result = await _androidHandler!.execute(
+          deviceId: deviceId,
+          nativeData: nativeData,
+        );
       } else if (Platform.isIOS || Platform.isMacOS) {
         if (_iosHandler == null) {
           throw UnsupportedPlatformException(
@@ -241,6 +246,9 @@ class HaloFeedback {
       }
       if (result.config.tenantId != null) {
         await _storage!.saveTenantId(result.config.tenantId);
+      }
+      if (result.config.baseUrl != null) {
+        await _storage!.saveBaseUrl(result.config.baseUrl!);
       }
       await _storage!.saveDeviceConfig(result.config);
     }

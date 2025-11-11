@@ -85,7 +85,10 @@ class FeedbackClient {
           }
 
           final authData = FeedbackAuthData.fromJson(responseData);
-          final configData = responseData['conifg'] as Map<String, dynamic>?;
+          // Note: API returns 'conifg' (typo in API), but we handle both
+          final configData =
+              (responseData['config'] as Map<String, dynamic>?) ??
+              (responseData['conifg'] as Map<String, dynamic>?);
           final config =
               configData != null
                   ? DeviceConfig.fromJson(configData)

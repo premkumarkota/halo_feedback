@@ -18,12 +18,12 @@ sealed class FeedbackResult {
 
 /// Success result containing feedback data
 class FeedbackSuccess extends FeedbackResult {
-  final String feedbackCode;
+  final String? feedbackCode; // Nullable for TV/IFP flow (no feedback code)
   final FeedbackAuthData authData;
   final DeviceConfig config;
 
   const FeedbackSuccess({
-    required this.feedbackCode,
+    this.feedbackCode,
     required this.authData,
     required this.config,
   });

@@ -33,6 +33,7 @@ class DeviceConfig {
   final String? tenantId;
   final String? enterpriseId;
   final String? userId;
+  final String? baseUrl; // For TV/IFP flow
   final Map<String, dynamic>? policy;
   final List<Ref>? refs;
 
@@ -41,6 +42,7 @@ class DeviceConfig {
     this.tenantId,
     this.enterpriseId,
     this.userId,
+    this.baseUrl,
     this.policy,
     this.refs,
   });
@@ -51,6 +53,7 @@ class DeviceConfig {
       tenantId: json['tenant'] as String?,
       enterpriseId: json['enterprise'] as String?,
       userId: json['user'] as String?,
+      baseUrl: json['baseUrl'] as String?,
       policy: json['policy'] as Map<String, dynamic>?,
       refs:
           json['refs'] != null
@@ -67,6 +70,7 @@ class DeviceConfig {
       if (tenantId != null) 'tenant': tenantId,
       if (enterpriseId != null) 'enterprise': enterpriseId,
       if (userId != null) 'user': userId,
+      if (baseUrl != null) 'baseUrl': baseUrl,
       if (policy != null) 'policy': policy,
       if (refs != null) 'refs': refs!.map((e) => e.toJson()).toList(),
     };

@@ -14,19 +14,34 @@ class IosFeedbackHandler {
 
   Future<FeedbackResult> execute({String? deviceId}) async {
     try {
-      // 1. Get MDM config
-      final mdmConfig = await _getMdmConfig();
-      final certId = mdmConfig['CERT_ID'] as String? ?? deviceId;
+      String? certId = deviceId;
+
+      // If deviceId is provided (from saved UDID), use it directly
+      // Otherwise, get from MDM config with retry logic (3 attempts, 700ms delay)
+      if (certId == null || certId.isEmpty) {
+        try {
+          final mdmConfig = await _getMdmConfig();
+          certId = mdmConfig['CERT_ID'] as String?;
+        } catch (e) {
+          // If MDM config retrieval fails, return failure
+          return FeedbackFailure(
+            error: 'Failed to retrieve MDM configuration: ${e.toString()}',
+            errorType: FeedbackErrorType.missingDeviceId,
+            exception: MissingDeviceIdException('MDM config retrieval failed'),
+          );
+        }
+      }
 
       if (certId == null || certId.isEmpty) {
         return FeedbackFailure(
-          error: 'Missing CERT_ID',
+          error:
+              'Missing CERT_ID or device UDID. Please ensure device is enrolled in MDM.',
           errorType: FeedbackErrorType.missingDeviceId,
           exception: const MissingDeviceIdException(),
         );
       }
 
-      // 2. Call feedback API
+      // 2. Call feedback API with retry logic (handled by FeedbackClient)
       final code = await _client.getFeedbackCode(
         endpoint: _config.endpoints.iosEndpoint,
         deviceId: certId,
