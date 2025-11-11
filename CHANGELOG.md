@@ -1,3 +1,29 @@
+## 0.0.4
+
+* **Enhanced Logging System**: Added comprehensive logging with both `developer.log` and `print` statements for better visibility in console output
+* **Re-initialization Support**: Plugin now allows re-initialization to update callbacks, enabling flexible callback configuration in different app screens
+* **Improved Error Handling**: Added detailed stack trace logging in exception handlers for better debugging
+* **Debug-Friendly Output**: All plugin operations now log to console with clear prefixes (`[HaloFeedback]`) for easy filtering
+* **Native Implementation Updates**:
+  * iOS: Added `getMDMConfig` method to plugin's native Swift implementation
+  * Windows: Added `getWindowsDeviceId` method with registry reading from HKEY_USERS and HKEY_LOCAL_MACHINE
+  * Android: Enhanced MainActivity to support both `my_native_plugin` and `halo_feedback` method channels
+* **Better Integration**: Improved integration with existing apps by allowing callback updates without full re-initialization
+* **Flow Type Logging**: Added detailed logging for different feedback flows (Mobile, TV/IFP, iOS, Windows)
+* **Execution Tracking**: Added debug prints at key execution points to track plugin flow
+* **Verbose Logging Control**: Added `verboseLogging` flag in `FeedbackLogger` for controlling log output
+* **Platform Detection Logging**: Enhanced platform detection with visible console output
+* **Success/Failure Visibility**: All success and failure results are now printed to console for immediate visibility
+
+## 0.0.3
+
+* **Production Integration**: Complete integration example with `halo-files` application
+* **Boilerplate Removal**: Removed all feedback-related boilerplate code from end-user applications
+* **Simplified API**: Single `executeFeedback()` call handles all platform-specific flows automatically
+* **Callback-Based Navigation**: Full navigation control through `FeedbackCallbacks` for seamless UI integration
+* **MainActivity Enhancement**: Added support for plugin's method channel alongside existing native channels
+* **Android ID Logging**: Added Android ID to native data for comprehensive device information logging
+
 ## 0.0.2
 
 * **Enhanced Android Support**: Added support for Android TV/IFP devices with Content Provider and Intent data handling
