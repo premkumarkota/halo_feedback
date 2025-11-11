@@ -25,10 +25,15 @@ class AndroidFeedbackHandler {
   }) async {
     try {
       // Get native data if not provided
+      FeedbackLogger.logFlowType('Getting native data...');
       final data = nativeData ?? await _getNativeData();
       final deviceType = data['deviceType'] as String?;
       final randomId = data['randomId'] as String?;
       final androidId = data['androidId'] as String?;
+
+      FeedbackLogger.logFlowType(
+        'Native data received. DeviceType: $deviceType, RandomId: ${randomId?.substring(0, randomId.length > 10 ? 10 : randomId.length)}...',
+      );
 
       // Log Android device data
       FeedbackLogger.logAndroidData(

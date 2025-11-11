@@ -12,6 +12,13 @@ public class HaloFeedbackPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "getPlatformVersion":
       result("iOS " + UIDevice.current.systemVersion)
+    case "getMDMConfig":
+      // Get MDM configuration from UserDefaults
+      if let config = UserDefaults.standard.dictionary(forKey: "com.apple.configuration.managed") {
+        result(config)
+      } else {
+        result([String: Any]())
+      }
     default:
       result(FlutterMethodNotImplemented)
     }

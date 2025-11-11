@@ -5,12 +5,16 @@ import 'dart:developer' as developer;
 class FeedbackLogger {
   static const String _tag = 'HaloFeedback';
 
+  /// Enable/disable verbose logging (default: true)
+  static bool verboseLogging = true;
+
   /// Log plugin initialization
   static void logInitialization({
     required String baseUrl,
     required String? appIdentifier,
     String? flavor,
   }) {
+    if (!verboseLogging) return;
     developer.log(
       '═══════════════════════════════════════════════════════════',
       name: _tag,
@@ -27,11 +31,17 @@ class FeedbackLogger {
       '═══════════════════════════════════════════════════════════',
       name: _tag,
     );
+    // Also print to console for visibility
+    print(
+      '🚀 [HaloFeedback] Plugin initialized - Base URL: $baseUrl, Flavor: $flavor',
+    );
   }
 
   /// Log platform detection
   static void logPlatformDetection(String platform) {
+    if (!verboseLogging) return;
     developer.log('📱 Platform Detected: $platform', name: _tag);
+    print('📱 [HaloFeedback] Platform: $platform');
   }
 
   /// Log Android-specific data
@@ -260,6 +270,7 @@ class FeedbackLogger {
     required String? baseUrl,
     String? platform,
   }) {
+    if (!verboseLogging) return;
     developer.log(
       '═══════════════════════════════════════════════════════════',
       name: _tag,
@@ -279,6 +290,9 @@ class FeedbackLogger {
     developer.log(
       '═══════════════════════════════════════════════════════════',
       name: _tag,
+    );
+    print(
+      '✅ [HaloFeedback] SUCCESS - Device: ${deviceId ?? "N/A"}, Code: ${feedbackCode ?? "N/A (TV/IFP)"}',
     );
   }
 
@@ -306,6 +320,10 @@ class FeedbackLogger {
       '═══════════════════════════════════════════════════════════',
       name: _tag,
     );
+    print('❌ [HaloFeedback] FAILURE - Type: $errorType, Error: $error');
+    if (details != null) {
+      print('❌ [HaloFeedback] Details: $details');
+    }
   }
 
   /// Log retry attempt
@@ -322,6 +340,8 @@ class FeedbackLogger {
 
   /// Log flow type
   static void logFlowType(String flowType) {
+    if (!verboseLogging) return;
     developer.log('🔄 Flow Type: $flowType', name: _tag);
+    print('🔄 [HaloFeedback] $flowType');
   }
 }

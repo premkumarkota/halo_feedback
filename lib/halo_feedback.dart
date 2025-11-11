@@ -78,7 +78,12 @@ class HaloFeedback {
     FeedbackCallbacks? callbacks,
   }) async {
     if (_initialized) {
-      throw InvalidConfigurationException('Plugin already initialized');
+      // Allow re-initialization to update callbacks
+      print('🔄 [HaloFeedback] Re-initializing plugin to update callbacks');
+      _config = config;
+      _callbacks = callbacks;
+      print('✅ [HaloFeedback] Callbacks updated successfully');
+      return;
     }
 
     _config = config;
@@ -150,10 +155,22 @@ class HaloFeedback {
     Map<String, dynamic>? nativeData,
     Map<String, dynamic>? customData,
   }) async {
+    // Log execution start
+    FeedbackLogger.logInitialization(
+      baseUrl: _config?.baseUrl ?? 'Unknown',
+      appIdentifier: _config?.appIdentifier,
+      flavor: null, // Flavor is not stored in config
+    );
+    FeedbackLogger.logPlatformDetection(Platform.operatingSystem);
+
     if (!_initialized || _config == null) {
-      throw InvalidConfigurationException(
-        'Plugin not initialized. Call initialize() first.',
+      final error = 'Plugin not initialized. Call initialize() first.';
+      FeedbackLogger.logFailure(
+        error: error,
+        errorType: 'InvalidConfiguration',
+        platform: Platform.operatingSystem,
       );
+      throw InvalidConfigurationException(error);
     }
 
     // Call onStart callback if provided
@@ -227,7 +244,15 @@ class HaloFeedback {
       }
 
       return result;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      // Log the exception
+      FeedbackLogger.logFailure(
+        error: 'Exception in executeFeedback: ${e.toString()}',
+        errorType: 'Exception',
+        platform: Platform.operatingSystem,
+        details: 'Stack trace: $stackTrace',
+      );
+
       // Create failure result for exceptions
       result = FeedbackFailure(
         error: e.toString(),
