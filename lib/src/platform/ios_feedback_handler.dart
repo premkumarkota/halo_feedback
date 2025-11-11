@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'package:flutter/services.dart';
 import '../core/feedback_client.dart';
 import '../core/feedback_config.dart';
 import '../core/feedback_result.dart';
 import '../exceptions/feedback_exceptions.dart';
-import '../models/feedback_data.dart';
 
 /// iOS/macOS Feedback Handler
 class IosFeedbackHandler {

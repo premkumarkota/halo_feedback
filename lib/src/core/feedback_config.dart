@@ -1,5 +1,3 @@
-import 'dart:io';
-
 /// Configuration for feedback operations
 class FeedbackConfig {
   /// Base URL for API calls

@@ -1,10 +1,9 @@
-import 'dart:io';
+import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
 import '../core/feedback_client.dart';
 import '../core/feedback_config.dart';
 import '../core/feedback_result.dart';
 import '../exceptions/feedback_exceptions.dart';
-import '../models/feedback_data.dart';
 
 /// Android Feedback Handler
 class AndroidFeedbackHandler {
@@ -90,7 +89,10 @@ class AndroidFeedbackHandler {
       });
     } catch (e) {
       // Log but don't fail - KeyedAppState is optional
-      print('Warning: Failed to send KeyedAppState feedback: $e');
+      developer.log(
+        'Warning: Failed to send KeyedAppState feedback: $e',
+        name: 'HaloFeedback',
+      );
     }
   }
 }
