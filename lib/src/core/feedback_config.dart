@@ -19,52 +19,31 @@ class FeedbackConfig {
     this.endpoints = const EndpointConfig(),
   });
 
-  /// Factory for common configurations based on flavor
+  /// Factory for creating config from environment variables (optional)
+  ///
+  /// Note: Flavor-to-URL mapping should be handled by the app, not the plugin.
+  /// This factory is provided for convenience but apps should prefer passing
+  /// baseUrl directly from their own flavor logic.
   ///
   /// Example:
   /// ```dart
-  /// FeedbackConfig.fromFlavor('qa', appIdentifier: 'files')
-  /// ```
-  factory FeedbackConfig.fromFlavor(String flavor, {String? appIdentifier}) {
-    final baseUrl = _getBaseUrlForFlavor(flavor);
-    return FeedbackConfig(
-      baseUrl: baseUrl,
-      appIdentifier: appIdentifier ?? _getAppIdentifierForFlavor(flavor),
-    );
-  }
-
-  /// Create configuration from environment variables
+  /// // Preferred: Get baseUrl from app's flavor logic
+  /// final baseUrl = ApiConstants.getDynamicBaseUrl();
+  /// FeedbackConfig(baseUrl: baseUrl, appIdentifier: 'files')
   ///
-  /// Reads FLAVOR and APP_IDENTIFIER from environment
+  /// // Alternative: Use environment variable
+  /// FeedbackConfig.fromEnvironment()
+  /// ```
   factory FeedbackConfig.fromEnvironment() {
-    const flavor = String.fromEnvironment('FLAVOR', defaultValue: 'qa');
+    const baseUrl = String.fromEnvironment(
+      'BASE_URL',
+      defaultValue: 'https://portal.qa.halofort.com',
+    );
     const appIdentifier = String.fromEnvironment(
       'APP_IDENTIFIER',
       defaultValue: 'files',
     );
-    return FeedbackConfig.fromFlavor(flavor, appIdentifier: appIdentifier);
-  }
-
-  static String _getBaseUrlForFlavor(String flavor) {
-    return switch (flavor.toLowerCase()) {
-      'ttemmdev' => 'https://portal.dev.halofort.com',
-      'ttemmdemo' => 'https://portal.emmdemo.tectoro.com',
-      'ttemmqa' => 'https://portal.qa.halofort.com',
-      'ttemmuat' => 'https://portal.uat.halofort.com',
-      'haloprod' => 'https://portal.halofort.com',
-      'multiprod' => 'https://portal.mdm.tectoro.com',
-      'mdmps1' => 'https://portal.mdmps1.tectoro.com',
-      'dev' => 'https://portal.dev.halofort.com',
-      'qa' => 'https://portal.qa.halofort.com',
-      'uat' => 'https://portal.uat.halofort.com',
-      'prod' => 'https://portal.halofort.com',
-      _ => 'https://portal.qa.halofort.com',
-    };
-  }
-
-  static String _getAppIdentifierForFlavor(String flavor) {
-    // Default app identifier based on flavor if needed
-    return 'files';
+    return FeedbackConfig(baseUrl: baseUrl, appIdentifier: appIdentifier);
   }
 }
 

@@ -12,7 +12,6 @@ class FeedbackLogger {
   static void logInitialization({
     required String baseUrl,
     required String? appIdentifier,
-    String? flavor,
   }) {
     if (!verboseLogging) return;
     developer.log(
@@ -24,16 +23,13 @@ class FeedbackLogger {
     if (appIdentifier != null) {
       developer.log('App Identifier: $appIdentifier', name: _tag);
     }
-    if (flavor != null) {
-      developer.log('Flavor: $flavor', name: _tag);
-    }
     developer.log(
       '═══════════════════════════════════════════════════════════',
       name: _tag,
     );
     // Also print to console for visibility
     print(
-      '🚀 [HaloFeedback] Plugin initialized - Base URL: $baseUrl, Flavor: $flavor',
+      '🚀 [HaloFeedback] Plugin initialized - Base URL: $baseUrl, App: $appIdentifier',
     );
   }
 

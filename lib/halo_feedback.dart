@@ -96,7 +96,6 @@ class HaloFeedback {
     FeedbackLogger.logInitialization(
       baseUrl: config.baseUrl,
       appIdentifier: config.appIdentifier,
-      flavor: null,
     );
     FeedbackLogger.logPlatformDetection(Platform.operatingSystem);
 
@@ -159,7 +158,6 @@ class HaloFeedback {
     FeedbackLogger.logInitialization(
       baseUrl: _config?.baseUrl ?? 'Unknown',
       appIdentifier: _config?.appIdentifier,
-      flavor: null, // Flavor is not stored in config
     );
     FeedbackLogger.logPlatformDetection(Platform.operatingSystem);
 
