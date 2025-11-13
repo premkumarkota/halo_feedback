@@ -1,6 +1,6 @@
 name: halo_feedback
 description: "Cross-platform MDM (Mobile Device Management) feedback plugin for Flutter. Enables device authentication and configuration retrieval for Android, iOS, macOS, and Windows platforms with callback-based navigation support."
-version: 0.0.6
+version: 0.0.7
 homepage: https://github.com/premkumarkota/halo_feedback
 repository: https://github.com/premkumarkota/halo_feedback
 issue_tracker: https://github.com/premkumarkota/halo_feedback/issues
